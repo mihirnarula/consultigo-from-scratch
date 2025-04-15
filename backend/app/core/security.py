@@ -6,6 +6,9 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from .config import settings
 
+# Algorithm for JWT
+ALGORITHM = settings.ALGORITHM
+
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

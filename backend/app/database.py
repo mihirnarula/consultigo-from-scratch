@@ -1,21 +1,15 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import QueuePool
 from .core.config import settings
 
 # Create database URL
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
-# Create engine with connection pooling
+# Create engine
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
-    poolclass=QueuePool,
-    pool_size=5,
-    max_overflow=10,
-    pool_timeout=30,
-    pool_recycle=1800,
-    echo=settings.SQL_DEBUG
+    connect_args={"check_same_thread": False}  # Only needed for SQLite
 )
 
 # Create SessionLocal class

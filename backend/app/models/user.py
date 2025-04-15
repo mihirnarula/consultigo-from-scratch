@@ -8,11 +8,12 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     full_name = Column(String, index=True)
-    is_active = Column(Boolean, default=True)
-    is_superuser = Column(Boolean, default=False)
+    is_active = Column(Boolean(), default=True)
+    is_superuser = Column(Boolean(), default=False)
     
-    # Relationship
+    # Relationships
     todos = relationship("Todo", back_populates="user", cascade="all, delete-orphan")
+    guesstimates = relationship("Guesstimate", back_populates="user", cascade="all, delete-orphan")
 
-    def __str__(self) -> str:
-        return f"User(id={self.id}, email={self.email})" 
+    def __str__(self):
+        return self.email 

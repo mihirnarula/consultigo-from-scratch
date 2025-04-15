@@ -5,14 +5,16 @@ from fastapi import APIRouter, Body, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from app import crud, models, schemas
+from app import crud, models
 from app.api import deps
 from app.core import security
 from app.core.config import settings
+from app.schemas.token import Token
+from app.schemas.user import User, UserCreate
 
 router = APIRouter()
 
-@router.post("/login", response_model=schemas.Token)
+@router.post("/login", response_model=Token)
 def login(
     db: Session = Depends(deps.get_db), form_data: OAuth2PasswordRequestForm = Depends()
 ) -> Any:
@@ -34,11 +36,11 @@ def login(
         "token_type": "bearer",
     }
 
-@router.post("/register", response_model=schemas.User)
+@router.post("/register", response_model=User)
 def register(
     *,
     db: Session = Depends(deps.get_db),
-    user_in: schemas.UserCreate,
+    user_in: UserCreate,
 ) -> Any:
     """
     Create new user.

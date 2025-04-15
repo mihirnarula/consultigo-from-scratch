@@ -1,12 +1,11 @@
 from typing import Any, Dict, List, Optional, Union
-from pydantic_settings import BaseSettings
-from pydantic import AnyHttpUrl, validator
+from pydantic import BaseModel, AnyHttpUrl, validator
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-class Settings(BaseSettings):
+class Settings(BaseModel):
     # Project Info
     PROJECT_NAME: str = "Todo App"
     VERSION: str = "1.0.0"
@@ -18,6 +17,12 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = "postgres"
     POSTGRES_DB: str = "todo_app"
     SQLALCHEMY_DATABASE_URI: Optional[str] = None
+    DATABASE_URL: Optional[str] = "sqlite:///./sql_app.db"
+    
+    # Firebase
+    USE_FIREBASE: bool = False
+    FIREBASE_CREDENTIALS_PATH: str = "C:\\Users\\Narula\\Downloads\\webdevcasestudy-cb0b6-87b342c9a1dd.json"
+    FIREBASE_DATABASE_URL: str = "https://webdevcasestudy-cb0b6-default-rtdb.firebaseio.com"
 
     @validator("SQLALCHEMY_DATABASE_URI", pre=True)
     def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
@@ -26,12 +31,12 @@ class Settings(BaseSettings):
         return f"postgresql://{values.get('POSTGRES_USER')}:{values.get('POSTGRES_PASSWORD')}@{values.get('POSTGRES_SERVER')}/{values.get('POSTGRES_DB')}"
 
     # Security
-    SECRET_KEY: str = "your-secret-key-here"  # Change this in production
+    SECRET_KEY: str = "your-super-secret-key-change-this"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # CORS
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = ["http://localhost:3000"]
+    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000"]
 
     @validator("BACKEND_CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:

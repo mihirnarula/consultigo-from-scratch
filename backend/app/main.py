@@ -4,28 +4,39 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import SQLAlchemyError
 from jose import JWTError
 
-from app.api.api import api_router
 from app.core.config import settings
+from app.db.firebase import initialize_firebase
+
+# Initialize Firebase first if enabled
+if settings.USE_FIREBASE:
+    # Use Firebase
+    print("Using Firebase Realtime Database")
+    initialize_firebase()
+    
+# Now import modules that might depend on Firebase
+from app.api.api import api_router
 from app.db.session import SessionLocal
 from app.db.base import Base
 
-# Create database tables
-Base.metadata.create_all(bind=SessionLocal.bind)
+# Create database based on configuration
+if not settings.USE_FIREBASE:
+    # Use SQLite/PostgreSQL
+    print("Using SQLAlchemy Database")
+    Base.metadata.create_all(bind=SessionLocal.bind)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-# Set all CORS enabled origins
-if settings.BACKEND_CORS_ORIGINS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 # Error handlers
 @app.exception_handler(HTTPException)
@@ -53,14 +64,15 @@ async def jwt_exception_handler(request: Request, exc: JWTError):
 @app.on_event("startup")
 async def startup_event():
     try:
-        # Verify database connection
-        db = SessionLocal()
-        db.execute("SELECT 1")
+        if not settings.USE_FIREBASE:
+            # Only verify database connection for SQL databases
+            # Firebase already initialized above
+            db = SessionLocal()
+            db.execute("SELECT 1")
+            db.close()
     except Exception as e:
         print(f"Database connection failed: {e}")
         raise e
-    finally:
-        db.close()
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -68,4 +80,9 @@ async def shutdown_event():
     pass
 
 # Include routers
-app.include_router(api_router, prefix=settings.API_V1_STR) 
+app.include_router(api_router, prefix=settings.API_V1_STR)
+
+# Add a test endpoint
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"} 
